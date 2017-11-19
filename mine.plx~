@@ -23,9 +23,9 @@ my $menu = $mainWindow->Menu;
 $menu->cascade(
   -label => '~Setting', -tearoff => 0,
   -menuitems => [
-    [command => 'New Easy Game', -command => [\&new_game, 9, 9, 10]],
-    [command => 'New Intermediate Game', -command => [\&new_game, 16, 16, 40]],
-    [command => 'New Hard Game', -command => [\&new_game, 16, 30, 99]],
+    [command => 'New Easy Game', -command => [\&config, 9, 9, 10]],
+    [command => 'New Intermediate Game', -command => [\&config, 16, 16, 40]],
+    [command => 'New Hard Game', -command => [\&config, 16, 30, 99]],
     [command => '~Quit', -command => sub{ exit }]
   ]
 );
@@ -38,157 +38,94 @@ MainLoop;
 ##Subroutines
 
 sub config{
-  $length = shift;
-  $height = shift;
-  $numberofmines = shift; 
+  my $length = shift;
+  my $height = shift;
+  my $numberofmines = shift; 
+  deleteboard($length, $height);
   new_game($length, $height, $numberofmines);  
 }
 
+sub deleteboard{
+  my $length = shift;
+  my $height = shift;
+
+  for(my $z = 0; $z < 30; $z = $z + 1) {
+	for(my $a = 0; $a < 30; $a = $a + 1) {
+		$button[$z][$a]->destroy if(exists $button[$z][$a] && defined $button[$z][$a]);
+	}
+  }
+}
+
 sub new_game{
-  $length = shift;
-  $height = shift;
-  $numberofmines = shift;
+  my $length = shift;
+  my $height = shift;
+  my $numberofmines = shift;
   $board = new board($length, $height, $numberofmines);
   createUI($length, $height);
 }
 
 sub createUI{
-  $length = shift;
-  $height = shift;
+  my $length = shift;
+  my $height = shift;
 
   for(my $z = 0; $z < $height; $z = $z + 1) {
 	for(my $a = 0; $a < $length; $a = $a + 1) {
-		$button[$z][$a] = Button(-command => [\&dig, $z, $a])->grid(-column => $z, -row => $a);
-		$button[$z][$a] -> bind (Button3 => [\&flag, $z, $a]);
+		$button[$z][$a] = $mainWindow->Button(-width => 2, -height => 1, -command => [\&dig, $z, $a])->grid(-column => $z, -row => $a);
+		$button[$z][$a]->bind( '<3>', [\&flag, $z, $a]);
+	}
+  }
+}
+
+
+sub flag{
+  shift;
+  my $x = shift;
+  print "$x + n";
+  my $y = shift;
+
+  my $returnvalue = 0;##$board->get($x, $y);
+
+  if($returnvalue == 10) {
+	$button[$x][$y]->configure(-text => " ", -state => 'normal');
+  } else {
+	$button[$x][$y]->configure(-text => "k", -state => 'normal');
+	print "Hello";
+  }
+
+  $board->toggleFlag($x, $y);
+}
+
+sub update{
+
+  for(my $z = 0; $z < 30; $z = $z + 1) {
+	for(my $a = 0; $a < 30; $a = $a + 1) {
+		my $returnvalue = $board->get($z, $a);
+		if(1) {
+		
+		} elsif (1) {
+
+		}
 	}
   }
 }
 
 sub dig{
-  $x = shift;
-  $y = shift;
+  my $x = shift;
+  my $y = shift;
   my $returnvalue = $board->get($x, $y);
   
-  if($returnvalue == 9) {
-	my $gameover = $mainWindow->messagebox(-title => 'Game Over', -massage => "You have lost");
-	#new_game();
+  if($returnvalue == -1) {
+	my $gameover = $mainWindow->messageBox(-title => 'Game Over', -message => "You have lost\n Do you wish to play again?", -type => "yesno");
+	if($gameover eq 'Yes') {
+		config(16,16,40);
+	} else {
+		$mainWindow->destroy;
+		sub{ exit };	
+	}
   } elsif($returnvalue > 0) {
 	show($x, $y, $returnvalue);
   } else {
 	uncover($x, $y);
-  }
-}
-
-
-=pod
-sub init_board{
-
-  for(my $z = 0; $z < $width; $z = $z + 1) {
-	my @array;
-	$array[$length - 1] = 0;
-	@board[$z] = \@array;
-  }
-
-  ## push @board, [(0)*$width] for (0..$length);
-  ## push @flagboard, [(0)*$width] for (0..$length);  
-
-  my $setnumberofmines = $numberofmines; 
-  
-  while($setnumberofmines > 0) {
-	my $xplace = int(rand($length - 1));
-	my $yplace = int(rand($width - 1));
-	
-	if($board[$xplace][$yplace] == 0) {
-		$board[$xplace][$yplace]  = 9;
-		$setnumberofmines = $setnumberofmines - 1;
-		setAdjacentNumber($xplace, $yplace);
-	}	
-  }
-}
-=pod
-sub setAdjacentNumber{
-  my $x = shift;
-  my $y = shift;
-
-  for(my $z = max($x-1,0); $x < min($x+1,$width); $z = $z + 1) {
-	for(my $a = max($y-1,0); $y < min($y+1,$length); $a = $a + 1) {
-		print('\$z: $z \n');
-		print('\$y: $y \n');
-		#print("Board: " + @board + "\n");
-		
-		if($z == $x && $a == $y) {
-			next;
-		}
-		if($board[$z][$a] == 9) {
-			next;
-		}
-		$board[$z][$a] = $board[$z][$a] + 1;
-	}
-  }
-}
-
-sub createUI{
-
-  for(my $z = 0; $z < $width; $z = $z + 1) {
-	for(my $a = 0; $a < $length; $a = $a + 1) {
-		$button[$z][$a] = Button(-command => [\&dig, $z, $a])->grid(-column => $z, -row => $a);
-		$button[$z][$a] -> bind (Button3 => [\&flag, $z, $a]);
-	}
-  }
-}
-=pod
-sub dig{
-  my $x = shift;
-  my $y = shift;
-
-  my $returnvalue = $board[$x][$y];
-
-  if($returnvalue == 9) {
-	my $gameover = $mainWindow->messagebox(-title => 'Game Over', -massage => "You have lost");
-	new_game();
-  } elsif($returnvalue > 0) {
-	show($x, $y, $returnvalue);
-  } else {
-	uncover($x, $y);
-  }
-}
-
-sub show{
-  my $x = shift;
-  my $y = shift;
-  my $number = shift;
-
-  $button[$x][$y] -> destroy if TK::Exists($button[$x][$y]);
-
-  $mainWindow -> Label(-text $number) -> grid(-column $x, -row $y);
-
-}
-=pod
-sub flag{
-  my $x = shift;
-  my $y = shift;
-
-  if($flagboard[$x][$y] == 1) {	
-        $button[$x][$y] -> configure(-text => "k", -state => 'disabled');	
-  } else {
-  	$button[$x][$y] -> configure(-text => "", -state => 'normal');
-  }
-}
-=pod
-sub uncover{
-  my $x = shift;
-  my $y = shift;
-
-  show($x, $y, 0);
-
-  my $returnvalue = $board[$x][$y];
-
-  if($returnvalue == 0){
-  	for(my $z = max($x-1,0); $x < min($x+1,$width); $z = $z + 1) {
-		for(my $a = max($y-1,0); $y < min($y+1,$length); $a = $a + 1) {
-			uncover($z, $a);
-		}
- 	}
   }
 }
 
