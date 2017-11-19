@@ -29,7 +29,7 @@ sub typed {
   return 0;
 }
 
-#Gets what needs to be displayed on the space (Throws exception if out of bounds)
+#Gets what needs to be displayed on the space, see $map (Throws exception if out of bounds)
 sub getSpace {
   my ($self, $x, $y) = @_;
   return $map->{$self->get($x,$y)};
@@ -63,9 +63,36 @@ sub toggleFlag{
   }
 }
 
-#Not done
+#Generates the board, has a safe space around the x and y coordinate (Throws exception if out of bounds)
 sub generate{
   my ($self, $x, $y) = @_;
+  my $needMines = $self->{mines};
+
+  die unless $self->valid($x,$y);
+
+  my $xR;
+  my $yR;
+  while ($needMines > 0){
+    $xR = rand($self->{col});
+    $yR = rand($self->{row});
+    if ($xR !~ [($x-1)..($x+1)] and $yR !~ [($y-1)..($y+1)]){
+      $needMines-- if addMine($xR,$yR);
+    }
+  }
+}
+
+#Adds a mine at the given location, the increments the surrounding blocks
+sub addMine{
+  my ($self, $x, $y) = @_;
+  if ($self->get($x, $y) == $mine){
+    return 0;
+  }
+  foreach my $_x (-1..1){
+    foreach my $_y (-1..1){
+      $self->set($x + $_x, $y + $_y, $self->get($x + $_x, $y + $_y) + 1) if $self->valid($x + $_x, $y + $_y) and $self->get($x + $_x, $y + $_y) ~~ [0..8];
+    }
+  }
+  return 1;
 }
 
 #Used to uncover a space and the surrounding area (Throws exception if the initial space is out of bounds)
@@ -84,7 +111,7 @@ sub uncover{
   return 1;
 }
 
-#Constructor
+#Constructor (Columns, Rows, Mines)
 sub new {
   my $class = shift;
   my $self = {};
