@@ -11,10 +11,11 @@ use warnings;
 
 my $numberofmines = 0;
 my $firstclick = 0;
+my $number = 0;
 my $frame1;
 my $frame2;
+my $counter;
 my $board;
-my @flagboard;
 my @button;
 
 my $mainWindow = MainWindow->new(-title => 'Minesweeper');
@@ -74,7 +75,7 @@ sub createUI{
   my $height = shift;
 
   my $frame1 = $mainWindow->Frame(-borderwidth => 2, -relief => 'groove');
-  $frame1->Label(-text=>'0')->pack(-side=>'top', -anchor=>'e');
+  $counter = $frame1->Label(-text=>$number)->pack(-side=>'top', -anchor=>'e');
   $frame1->pack(-side=>'top');
   
   my $frame2 = $mainWindow->Frame(-borderwidth => 2, -relief => 'groove');
@@ -87,6 +88,12 @@ sub createUI{
   $frame2->pack;
 }
 
+sub counter{
+  my $add = shift;
+  $number = $number + $add;
+  print $number;
+  $counter->configure(-text=>$number);
+}
 
 sub flag{
   shift;
@@ -98,11 +105,13 @@ sub flag{
 	return;
   }
   my $returnvalue = $board->get($x, $y);
-  print "flag: $returnvalue";
+  
   if($returnvalue >= 10) {
 	$button[$x][$y]->configure(-text => " ", -state => 'normal');
+	counter(-1);
   } else {
 	$button[$x][$y]->configure(-text => "k", -state => 'normal');
+  	counter(1);
   }
 
   $board->toggleFlag($x, $y);
@@ -131,7 +140,9 @@ sub dig{
 	$firstclick = 1;
 	$board->generate($x, $y);
 	$board->uncover($x, $y);
+	showgroup($x,$y);
 	print "board generated";
+	return;
   }
 
   my $returnvalue = $board->get($x, $y);
@@ -168,15 +179,31 @@ sub showgroup{
   my $x = shift;
   my $y = shift;
 
-   $board->uncover($x, $y);
+  my $text = " ";
 
-  $button[$x][$y]->configure(-text=>" ",-relief=>'flat',-background=>'white',-state=>'disable');
+  $board->uncover($x, $y);
+
+  my $returnvalue = $board->get($x,$y);
+  
+  $returnvalue = $returnvalue % 20;
+  if($returnvalue == 0) {
+  	$returnvalue = " ";
+  } 
+
+  $button[$x][$y]->configure(-text=>$returnvalue,-relief=>'flat',-background=>'white',-state=>'disable');
   $button[$x][$y]->bind("<3>", undef);
 
-  for(my $z = 0; $z < 16; $z = $z + 1) {
-	for(my $a = 0; $a < 16; $a = $a + 1) {
+  for(my $z = 0; $z < $board->{col}; $z = $z + 1) {
+	for(my $a = 0; $a < $board->{row}; $a = $a + 1) {
 		if($board->get($z, $a) >= 20) {
- 			$button[$z][$a]->configure(-text=>" ",-relief=>'flat',-background=>'white',-state=>'disable');
+			$returnvalue = $board->get($z,$a);
+  
+  			$returnvalue = $returnvalue % 20;
+ 			if($returnvalue == 0) {
+  				$returnvalue = " ";
+			} 
+		
+ 			$button[$z][$a]->configure(-text=>$returnvalue,-relief=>'flat',-background=>'white',-state=>'disable');
   			$button[$z][$a]->bind("<3>", undef);
 		}		
 	}
