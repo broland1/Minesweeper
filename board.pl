@@ -1,3 +1,5 @@
+package board;
+
 use strict;
 use warnings;
 
@@ -98,6 +100,9 @@ sub addMine{
 #Used to uncover a space and the surrounding area (Throws exception if the initial space is out of bounds)
 sub uncover{
   my ($self, $x, $y) = @_;
+  if (!$self->valid($x,$y)){
+    return 0;
+  }
   my $val = $self->get($x,$y);
   return 0 if ($val == $mine);
   $self->set($x,$y, ($self->get($x,$y) % $flag) + $uncov);
