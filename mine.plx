@@ -157,6 +157,8 @@ sub dig{
 	}
   } elsif($returnvalue == 0) {
 	showgroup($x, $y);
+  } elsif($returnvalue >= 10) {
+	return;	 
   } else {
 	show($x, $y, $returnvalue);
   }
@@ -196,7 +198,7 @@ sub showgroup{
   for(my $z = 0; $z < $board->{col}; $z = $z + 1) {
 	for(my $a = 0; $a < $board->{row}; $a = $a + 1) {
 		if($board->get($z, $a) >= 20) {
-			$returnvalue = $board->get($z,$a);
+			$returnvalue = $board->getSpace($z,$a);
   
   			$returnvalue = $returnvalue % 20;
  			if($returnvalue == 0) {

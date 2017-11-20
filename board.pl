@@ -10,7 +10,7 @@ my $uncov = 20;
 my $invalid = -9000;
 
 #Mapping of display values
-my $map = {$flag => '*', 
+my $map = {$mine => '*', 
         0 => 'b', 1 => 'b', 2=> 'b', 3=>'b', 4=>'b', 5=>'b', 6=>'b', 7=>'b', 8=>'b',
         10 => 'f', 11 => 'f', 12=> 'f', 13=>'f', 14=>'f', 15=>'f', 16=>'f', 17=>'f', 18=>'f',
         20 => ' ', 21 => '1', 22=> '2', 23=>'2', 24=>'4', 25=>'5', 26=>'6', 27=>'7', 28=>'8',
@@ -92,6 +92,7 @@ sub addMine{
   foreach my $_x (-1..1){
     foreach my $_y (-1..1){
       $self->set($x + $_x, $y + $_y, $self->get($x + $_x, $y + $_y) + 1) if $self->valid($x + $_x, $y + $_y) and $self->get($x + $_x, $y + $_y) ~~ [0..8];
+      print "\$x " + '$_x' + $self->get($x + $_x, $y + $_y) + '\n' if $self->valid($x + $_x, $y + $_y);
     }
   }
   return 1;
