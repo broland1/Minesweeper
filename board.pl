@@ -78,7 +78,7 @@ sub generate{
     $xR = rand($self->{col});
     $yR = rand($self->{row});
     if ($xR !~ [($x-1)..($x+1)] and $yR !~ [($y-1)..($y+1)]){
-      $needMines-- if addMine($xR,$yR);
+      $needMines-- if $self->addMine($xR,$yR);
     }
   }
 }
@@ -122,6 +122,9 @@ sub new {
   $self->{mines} = shift;
   $self->{flags} = $self->{mines};
 
+  print $self->{col};
+  print $self->{row};
+  print $self->{mines};
   foreach my $x (0..($self->{col}-1)){
     foreach my $y (0..($self->{row}-1)){
       $self->{board}[$x][$y] = 0; 

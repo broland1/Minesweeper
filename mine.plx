@@ -11,6 +11,8 @@ use warnings;
 
 my $numberofmines = 0;
 my $firstclick = 0;
+my $frame1;
+my $frame2;
 my $board;
 my @flagboard;
 my @button;
@@ -31,7 +33,7 @@ $menu->cascade(
 );
 $mainWindow->configure(-menu => $menu);
 
-config();
+##config();
 
 MainLoop;
 
@@ -42,6 +44,7 @@ sub config{
   my $height = shift;
   my $numberofmines = shift; 
   deleteboard($length, $height);
+  $firstclick = 0;
   new_game($length, $height, $numberofmines);  
 }
 
@@ -49,11 +52,13 @@ sub deleteboard{
   my $length = shift;
   my $height = shift;
 
+  
   for(my $z = 0; $z < 30; $z = $z + 1) {
 	for(my $a = 0; $a < 30; $a = $a + 1) {
 		$button[$z][$a]->destroy if(exists $button[$z][$a] && defined $button[$z][$a]);
 	}
   }
+  $frame2->destroy() if Tk::Exists($frame2);
 }
 
 sub new_game{
@@ -68,12 +73,18 @@ sub createUI{
   my $length = shift;
   my $height = shift;
 
+  my $frame1 = $mainWindow->Frame(-borderwidth => 2, -relief => 'groove');
+  $frame1->Label(-text=>'0')->pack(-side=>'top', -anchor=>'e');
+  $frame1->pack(-side=>'top');
+  
+  my $frame2 = $mainWindow->Frame(-borderwidth => 2, -relief => 'groove');
   for(my $z = 0; $z < $height; $z = $z + 1) {
 	for(my $a = 0; $a < $length; $a = $a + 1) {
-		$button[$z][$a] = $mainWindow->Button(-width => 2, -height => 1, -command => [\&dig, $z, $a])->grid(-column => $z, -row => $a);
+		$button[$z][$a] = $frame2->Button(-width => 2, -height => 1, -command => [\&dig, $z, $a])->grid(-column => $z, -row => $a);
 		$button[$z][$a]->bind( '<3>', [\&flag, $z, $a]);
 	}
   }
+  $frame2->pack;
 }
 
 
@@ -83,16 +94,19 @@ sub flag{
   print "$x + n";
   my $y = shift;
 
-  my $returnvalue = 0;##$board->get($x, $y);
-
-  if($returnvalue == 10) {
+  if($firstclick == 0) {
+	return;
+  }
+  my $returnvalue = $board->get($x, $y);
+  print "flag: $returnvalue";
+  if($returnvalue >= 10) {
 	$button[$x][$y]->configure(-text => " ", -state => 'normal');
   } else {
 	$button[$x][$y]->configure(-text => "k", -state => 'normal');
-	print "Hello";
   }
 
   $board->toggleFlag($x, $y);
+  
 }
 
 sub update{
@@ -100,8 +114,8 @@ sub update{
   for(my $z = 0; $z < 30; $z = $z + 1) {
 	for(my $a = 0; $a < 30; $a = $a + 1) {
 		my $returnvalue = $board->get($z, $a);
-		if(1) {
-		
+		if($returnvalue == 20) {
+			
 		} elsif (1) {
 
 		}
@@ -112,6 +126,14 @@ sub update{
 sub dig{
   my $x = shift;
   my $y = shift;
+
+  if($firstclick == 0) {
+	$firstclick = 1;
+	$board->generate($x, $y);
+	$board->uncover($x, $y);
+	print "board generated";
+  }
+
   my $returnvalue = $board->get($x, $y);
   
   if($returnvalue == -1) {
@@ -122,10 +144,41 @@ sub dig{
 		$mainWindow->destroy;
 		sub{ exit };	
 	}
-  } elsif($returnvalue > 0) {
-	show($x, $y, $returnvalue);
+  } elsif($returnvalue == 0) {
+	showgroup($x, $y);
   } else {
-	uncover($x, $y);
+	show($x, $y, $returnvalue);
   }
 }
 
+sub show{
+  my $x = shift;
+  my $y = shift;
+  my $returnvalue = shift;
+
+  $board->uncover($x, $y);
+
+  $button[$x][$y]->configure(-text=>$returnvalue,-relief=>'flat',-background=>'white',-state=>'disable');
+  $button[$x][$y]->bind("<3>", undef);
+  #$button[$x][$y]->destroy;
+  #$button[$x][$y] = $frame2->Label(-text => $returnvalue, -width => 2, -height => 1,)->grid(-column => $x, -row => $y);
+}
+
+sub showgroup{
+  my $x = shift;
+  my $y = shift;
+
+   $board->uncover($x, $y);
+
+  $button[$x][$y]->configure(-text=>" ",-relief=>'flat',-background=>'white',-state=>'disable');
+  $button[$x][$y]->bind("<3>", undef);
+
+  for(my $z = 0; $z < 16; $z = $z + 1) {
+	for(my $a = 0; $a < 16; $a = $a + 1) {
+		if($board->get($z, $a) >= 20) {
+ 			$button[$z][$a]->configure(-text=>" ",-relief=>'flat',-background=>'white',-state=>'disable');
+  			$button[$z][$a]->bind("<3>", undef);
+		}		
+	}
+  }
+}
