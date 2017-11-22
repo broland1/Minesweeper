@@ -2,6 +2,8 @@ package board;
 
 use strict;
 use warnings;
+use Data::Dumper;
+
 
 #Class fields
 my $mine = -1;
@@ -19,7 +21,7 @@ my $map = {$mine => '*',
 #Checks to see if the space is in range (valid)
 sub valid {
   my ($self, $x, $y) = @_;
-  return $self->{row} > $x and $self->{col} > $y and $x > 0 and $y > 0;
+  return ($self->{row} > $x and $self->{col} > $y and $x >= 0 and $y >= 0);
 }
 
 #Checks to see if the space is type (Depreciated)
@@ -77,8 +79,9 @@ sub generate{
   while ($needMines > 0){
     $xR = rand($self->{col});
     $yR = rand($self->{row});
-    if ($xR !~ [($x-1)..($x+1)] and $yR !~ [($y-1)..($y+1)]){
-      $needMines-- if $self->addMine($xR,$yR);
+    if ((($xR < $x-1 or  $xR > $x+1) and ($yR < $y-1 or $yR > $y+1))) {
+      print "Baka";
+	    $needMines-- if $self->addMine($xR,$yR);
     }
   }
 }
@@ -89,16 +92,16 @@ sub addMine{
   if ($self->get($x, $y) == $mine){
     return 0;
   }
+  $self->set($x, $y, $mine);
   foreach my $_x (-1..1){
     foreach my $_y (-1..1){
       $self->set($x + $_x, $y + $_y, $self->get($x + $_x, $y + $_y) + 1) if $self->valid($x + $_x, $y + $_y) and $self->get($x + $_x, $y + $_y) ~~ [0..8];
-      print "\$x " + '$_x' + $self->get($x + $_x, $y + $_y) + '\n' if $self->valid($x + $_x, $y + $_y);
     }
   }
   return 1;
 }
 
-#Used to uncover a space and the surrounding area (Throws exception if the initial space is out of bounds)
+#Used to uncover a space and the surrounding area
 sub uncover{
   my ($self, $x, $y) = @_;
   if (!$self->valid($x,$y)){
@@ -116,7 +119,6 @@ sub uncover{
   }
   return 1;
 }
-
 #Constructor (Columns, Rows, Mines)
 sub new {
   my $class = shift;

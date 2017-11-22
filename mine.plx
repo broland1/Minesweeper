@@ -15,6 +15,7 @@ my $number = 0;
 my $frame1;
 my $frame2;
 my $counter;
+my $total;
 my $board;
 my @button;
 
@@ -28,7 +29,7 @@ $menu->cascade(
   -menuitems => [
     [command => 'New Easy Game', -command => [\&config, 9, 9, 10]],
     [command => 'New Intermediate Game', -command => [\&config, 16, 16, 40]],
-    [command => 'New Hard Game', -command => [\&config, 16, 30, 99]],
+    [command => 'New Hard Game', -command => [\&config, 24, 24, 160]],
     [command => '~Quit', -command => sub{ exit }]
   ]
 );
@@ -46,6 +47,7 @@ sub config{
   my $numberofmines = shift; 
   deleteboard($length, $height);
   $firstclick = 0;
+  $number = 0;
   new_game($length, $height, $numberofmines);  
 }
 
@@ -53,12 +55,7 @@ sub deleteboard{
   my $length = shift;
   my $height = shift;
 
-  
-  for(my $z = 0; $z < 30; $z = $z + 1) {
-	for(my $a = 0; $a < 30; $a = $a + 1) {
-		$button[$z][$a]->destroy if(exists $button[$z][$a] && defined $button[$z][$a]);
-	}
-  }
+  $frame1->destroy() if Tk::Exists($frame1);
   $frame2->destroy() if Tk::Exists($frame2);
 }
 
@@ -74,13 +71,15 @@ sub createUI{
   my $length = shift;
   my $height = shift;
 
-  my $frame1 = $mainWindow->Frame(-borderwidth => 2, -relief => 'groove');
-  $counter = $frame1->Label(-text=>$number)->pack(-side=>'top', -anchor=>'e');
-  $frame1->pack(-side=>'top');
+  $frame1 = $mainWindow->Frame(-borderwidth => 2, -relief => 'groove');
+  $total = $frame1->Label(-text=>"Mines: $board->{mines}")->pack(-side=>'top', -anchor=>'w');
+  $counter = $frame1->Label(-text=>"Flags: $number")->pack(-side=>'top',-anchor=>'e');
+  $frame1->pack(-fill=>'x');
   
-  my $frame2 = $mainWindow->Frame(-borderwidth => 2, -relief => 'groove');
+  $frame2 = $mainWindow->Frame(-borderwidth => 2, -relief => 'groove');
   for(my $z = 0; $z < $height; $z = $z + 1) {
 	for(my $a = 0; $a < $length; $a = $a + 1) {
+		my $resize =  
 		$button[$z][$a] = $frame2->Button(-width => 2, -height => 1, -command => [\&dig, $z, $a])->grid(-column => $z, -row => $a);
 		$button[$z][$a]->bind( '<3>', [\&flag, $z, $a]);
 	}
@@ -91,8 +90,24 @@ sub createUI{
 sub counter{
   my $add = shift;
   $number = $number + $add;
-  print $number;
-  $counter->configure(-text=>$number);
+  $counter->configure(-text=>"Flags: $number");
+  check($number);
+}
+
+sub check{
+  my $check = shift;
+
+  my $returnvalue = $board->{mines};
+
+  if($returnvalue == $check) {
+	my $gameover = $mainWindow->messageBox(-title => 'You have not died!', -message => "You have not died!\n Do you wish to play again?", -type => "yesno");
+	if($gameover eq 'Yes') {
+		config(16,16,40);
+	} else {
+		$mainWindow->destroy;
+		sub{ exit };	
+	}
+  } 
 }
 
 sub flag{
